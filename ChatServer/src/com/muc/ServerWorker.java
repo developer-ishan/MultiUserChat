@@ -2,20 +2,18 @@ package com.muc;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.List;
 
-public class ServerWorker implements Runnable{
+public class ServerWorker extends Thread {
 
     private final Socket clientSocket;
     private final Server server;
     private String login = null;
     private OutputStream outputStream;
 
-    public ServerWorker(Server server ,Socket clientSocket){
+    public ServerWorker(Server server, Socket clientSocket) {
         this.server = server;
         this.clientSocket = clientSocket;
     }
@@ -31,25 +29,40 @@ public class ServerWorker implements Runnable{
         }
     }
 
-    private void handleClientSocket() throws IOException, InterruptedException{
+    private void handleClientSocket() throws IOException, InterruptedException {
         InputStream inputStream = clientSocket.getInputStream();
         this.outputStream = clientSocket.getOutputStream();
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
-        while ( (line = reader.readLine()) != null ){
+        while ( (line = reader.readLine()) != null) {
             String[] tokens = StringUtils.split(line);
-            if(tokens != null && tokens.length > 0){
+            if (tokens != null && tokens.length > 0) {
                 String cmd = tokens[0];
-                if("quit".equalsIgnoreCase(cmd)){
+                if ("logoff".equals(cmd) || "quit".equalsIgnoreCase(cmd)) {
+                    handleLogoff();
                     break;
-                } else if("login".equalsIgnoreCase(cmd)){
+                } else if ("login".equalsIgnoreCase(cmd)) {
                     handleLogin(outputStream, tokens);
-                }
-                else {
-                    String msg = "Unknown option "+cmd+"\n";
+                } else {
+                    String msg = "unknown " + cmd + "\n";
                     outputStream.write(msg.getBytes());
                 }
+            }
+        }
+
+        clientSocket.close();
+    }
+
+    private void handleLogoff() throws IOException {
+        server.removeWorker(this);
+        List<ServerWorker> workerList = server.getWorkerList();
+
+        // send other online users current user's status
+        String onlineMsg = "offline " + login + "\n";
+        for(ServerWorker worker : workerList) {
+            if (!login.equals(worker.getLogin())) {
+                worker.send(onlineMsg);
             }
         }
         clientSocket.close();
@@ -60,34 +73,50 @@ public class ServerWorker implements Runnable{
     }
 
     private void handleLogin(OutputStream outputStream, String[] tokens) throws IOException {
-        String msg = null;
-        if(tokens.length == 3){
+        if (tokens.length == 3) {
             String login = tokens[1];
             String password = tokens[2];
 
-            if((login.equals("guest") && password.equals("guest")) ||
+            if ((login.equals("guest") && password.equals("guest")) ||
                     (login.equals("ishan") && password.equals("ishan")) ||
-                    (login.equals("mojo") && password.equals("mojo")) ||
-                    (login.equals("devel") && password.equals("devel"))){
-                msg = "OK LOGIN\n";
+                    (login.equals("mojo") && password.equals("mojo"))) {
+                String msg = "ok login\n";
+                outputStream.write(msg.getBytes());
                 this.login = login;
-                System.out.println("User logged in successfully: "+login);
+                System.out.println("User logged in succesfully: " + login);
 
-                String onLineMsg = "ONLINE "+login+"\n";
-                ArrayList<ServerWorker> workerList = server.getWorkerList();
-                for(ServerWorker worker : workerList){
-                    worker.send(onLineMsg);
+                List<ServerWorker> workerList = server.getWorkerList();
+
+                // send current user all other online logins
+                for(ServerWorker worker : workerList) {
+                    if (worker.getLogin() != null) {
+                        if (!login.equals(worker.getLogin())) {
+                            String msg2 = "online " + worker.getLogin() + "\n";
+                            send(msg2);
+                        }
+                    }
+                }
+
+                // send other online users current user's status
+                String onlineMsg = "online " + login + "\n";
+                for(ServerWorker worker : workerList) {
+                    if (!login.equals(worker.getLogin())) {
+                        worker.send(onlineMsg);
+                    }
                 }
             } else {
-                msg = "ERROR LOGIN\n";
+                String msg = "error login\n";
+                outputStream.write(msg.getBytes());
             }
         } else{
-            msg = "INVALID arguments should be [login <user> <password>]\n";
+            String msg = "invalid number of arguments, should be [login <username> <password>]\n";
+            outputStream.write(msg.getBytes());
         }
-        outputStream.write(msg.getBytes());
     }
 
-    private void send(String msg) throws IOException{
-        outputStream.write(msg.getBytes());
+    private void send(String msg) throws IOException {
+        if (login != null) {
+            outputStream.write(msg.getBytes());
+        }
     }
 }
