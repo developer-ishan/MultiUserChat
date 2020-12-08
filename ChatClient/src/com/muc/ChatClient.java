@@ -1,8 +1,6 @@
 package com.muc;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class ChatClient {
@@ -12,18 +10,40 @@ public class ChatClient {
     private Socket socket;
     private InputStream serverIn;
     private OutputStream serverOut;
+    private BufferedReader bufferedIn;
 
     public ChatClient(String serverName, int serverPort) {
         this.serverName = serverName;
         this.serverPort = serverPort;
     }
 
-    public static void main(String[] args) {
-        ChatClient client = new ChatClient("localhost",8818);
+    public static void main(String[] args) throws IOException{
+        ChatClient client = new ChatClient("localhost",8018);
         if (client.connect()){
             System.out.println("Connected Successfully");
+
+            if(client.login("guest","guest")){
+                 System.out.println("Login Successful.");
+            } else{
+                System.err.println("Login Failed.");
+            }
+
         } else{
             System.out.println("Connection failed");
+        }
+    }
+
+    private boolean login(String login, String password) throws IOException{
+        String cmd = "login " + login + " " + password + "\n";
+        serverOut.write(cmd.getBytes());
+
+        String response = bufferedIn.readLine();
+        System.out.println("Response: "+response);
+
+        if("ok login".equalsIgnoreCase(response)){
+            return true;
+        } else{
+            return false;
         }
     }
 
@@ -33,6 +53,7 @@ public class ChatClient {
             System.out.println("Client port is "+socket.getLocalPort());
             this.serverOut = socket.getOutputStream();
             this.serverIn = socket.getInputStream();
+            this.bufferedIn = new BufferedReader(new InputStreamReader(serverIn));
             return true;
         } catch (IOException e) {
             e.printStackTrace();
