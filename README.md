@@ -1,6 +1,6 @@
 # MultiUserChat
 
-### Java Socket Programming
+### Java Socket Programming and Swing
 
 User & Server
 
