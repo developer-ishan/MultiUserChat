@@ -13,7 +13,7 @@ User & Server
 
     * online / offline
     * notifications :
-         a. Group invites
+         * Group invites
 
 3. User --> User
 
