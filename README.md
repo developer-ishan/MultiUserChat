@@ -12,6 +12,8 @@ User & Server
 2. Server --> User
 
     * online / offline
+    * notifications :
+         a. Group invites
 
 3. User --> User
 
