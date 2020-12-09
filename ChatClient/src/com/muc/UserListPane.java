@@ -2,6 +2,8 @@ package com.muc;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class UserListPane extends JPanel implements UserStatusListener{
@@ -14,10 +16,27 @@ public class UserListPane extends JPanel implements UserStatusListener{
         this.client = client;
         this.client.addUserStatusListener(this);
 
+
         userListModel = new DefaultListModel<>();
         userListUI = new JList<>(userListModel);
         setLayout(new BorderLayout());
         add(new JScrollPane(userListUI),BorderLayout.CENTER);
+
+        userListUI.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(e.getClickCount() > 1){
+                    String user = userListUI.getSelectedValue();
+                    MessagePane messagePane = new MessagePane(client, user);
+
+                    JFrame messageWindow = new JFrame("Message: "+user);
+                    messageWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    messageWindow.setSize(500,500);
+                    messageWindow.getContentPane().add(messagePane, BorderLayout.CENTER);
+                    messageWindow.setVisible(true);
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {
