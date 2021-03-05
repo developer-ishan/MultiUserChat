@@ -7,7 +7,7 @@ import java.net.Socket;
 
 public class ServerMain {
     public static void main(String[] args) {
-        int port = 8018;
+        int port = 9000;
         Server server = new Server(port);
         server.start();
     }

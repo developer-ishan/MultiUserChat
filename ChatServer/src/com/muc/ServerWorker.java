@@ -67,6 +67,7 @@ public class ServerWorker extends Thread {
         if (tokens.length > 1) {
             String topic = tokens[1];
             topicSet.remove(topic);
+            System.out.println(login + " Left " + topic);
         }
     }
 
@@ -78,6 +79,7 @@ public class ServerWorker extends Thread {
         if (tokens.length > 1) {
             String topic = tokens[1];
             topicSet.add(topic);
+            System.out.println(login + " Joined " + topic);
         }
     }
 
@@ -92,8 +94,9 @@ public class ServerWorker extends Thread {
         List<ServerWorker> workerList = server.getWorkerList();
         for(ServerWorker worker : workerList) {
             if (isTopic) {
-                if (worker.isMemberOfTopic(sendTo)) {
-                    String outMsg = "msg " + sendTo + ":" + login + " " + body + "\n";
+                if (worker.isMemberOfTopic(sendTo) && worker.login!=login) {
+                    String outMsg = "msg " + sendTo + "-" + login + " " + body + "\n";
+//                    String outMsg = "msg " + sendTo  + " " + body + "\n";
                     worker.send(outMsg);
                 }
             } else {
@@ -107,6 +110,7 @@ public class ServerWorker extends Thread {
 
     private void handleLogoff() throws IOException {
         server.removeWorker(this);
+        System.out.println(login + " closed the application.");
         List<ServerWorker> workerList = server.getWorkerList();
 
         // send other online users current user's status
@@ -128,9 +132,12 @@ public class ServerWorker extends Thread {
             String login = tokens[1];
             String password = tokens[2];
 
-            if ((login.equals("guest") && password.equals("guest")) ||
+            if ((login.equals("dennis") && password.equals("dennis")) ||
                     (login.equals("ishan") && password.equals("ishan")) ||
-                    (login.equals("mojo") && password.equals("mojo"))) {
+                    (login.equals("lovedeep") && password.equals("lovedeep")) ||
+                    (login.equals("bakul") && password.equals("bakul")) ||
+                    (login.equals("mohit") && password.equals("mohit")) ||
+                    (login.equals("sanskar") && password.equals("sanskar"))) {
                 String msg = "ok login\n";
                 outputStream.write(msg.getBytes());
                 this.login = login;
